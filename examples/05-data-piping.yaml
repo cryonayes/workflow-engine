@@ -1,0 +1,55 @@
+# Data Piping Between Tasks Example
+# Demonstrates: input/output configuration, piping data between tasks
+
+name: Data Pipeline
+description: Shows how to pipe data between tasks using stdin/stdout
+
+tasks:
+  - id: generate-data
+    name: Generate JSON Data
+    run: |
+      echo '{"users": ["alice", "bob", "charlie"], "count": 3}'
+    output:
+      type: string
+      captureStderr: false
+
+  - id: process-data
+    name: Process with jq
+    run: cat
+    input:
+      type: pipe
+      value: ${{ tasks.generate-data.output }}
+    output:
+      type: string
+
+  - id: generate-numbers
+    name: Generate Number Sequence
+    run: seq 1 10
+    output:
+      type: string
+
+  - id: sum-numbers
+    name: Calculate Sum
+    run: |
+      sum=0
+      while read num; do
+        sum=$((sum + num))
+      done
+      echo "Sum: $sum"
+    input:
+      type: pipe
+      value: ${{ tasks.generate-numbers.output }}
+    dependsOn:
+      - generate-numbers
+    output:
+      type: string
+
+  - id: final-report
+    name: Create Final Report
+    run: |
+      echo "=== Pipeline Report ==="
+      echo "Data processed successfully"
+      echo "Calculation result: ${{ tasks.sum-numbers.output }}"
+    dependsOn:
+      - process-data
+      - sum-numbers

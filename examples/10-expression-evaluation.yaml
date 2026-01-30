@@ -1,0 +1,83 @@
+# Expression Evaluation Example
+# Demonstrates: all expression types and comparisons
+
+name: Expression Evaluation Demo
+description: Shows various expression types and comparison operators
+
+environment:
+  DEPLOY_ENV: staging
+  FEATURE_FLAG: enabled
+  MAX_RETRIES: "3"
+
+tasks:
+  - id: setup
+    name: Setup Task
+    run: echo "Setup complete"
+    output:
+      type: string
+
+  - id: build
+    name: Build Task
+    run: 'echo "Build output: v2.1.0"'
+    output:
+      type: string
+
+  # Environment variable comparison
+  - id: staging-only
+    name: Staging Deployment
+    run: echo "Deploying to staging environment"
+    if: ${{ env.DEPLOY_ENV == 'staging' }}
+    dependsOn:
+      - build
+
+  # Not equal comparison
+  - id: non-prod
+    name: Non-Production Task
+    run: echo "This runs in non-production"
+    if: ${{ env.DEPLOY_ENV != 'production' }}
+    dependsOn:
+      - build
+
+  # Exit code comparison
+  - id: check-exit-code
+    name: Check Build Exit Code
+    run: echo "Build succeeded with exit code 0"
+    if: ${{ tasks.build.exitcode == 0 }}
+    dependsOn:
+      - build
+
+  # Logical AND
+  - id: combined-and
+    name: Combined AND Condition
+    run: 'echo "Both conditions met!"'
+    if: ${{ success() && env.FEATURE_FLAG == 'enabled' }}
+    dependsOn:
+      - build
+
+  # Logical OR
+  - id: combined-or
+    name: Combined OR Condition
+    run: echo "At least one condition met"
+    if: ${{ env.DEPLOY_ENV == 'production' || env.DEPLOY_ENV == 'staging' }}
+    dependsOn:
+      - build
+
+  # Negation
+  - id: not-failed
+    name: Not Failed Check
+    run: echo "Build did not fail"
+    if: ${{ !failure() }}
+    dependsOn:
+      - build
+
+  # Using task output in expressions
+  - id: version-check
+    name: Check Version Output
+    run: 'echo "Version from build: ${{ tasks.build.output }}"'
+    dependsOn:
+      - build
+
+  # Using workflow metadata
+  - id: workflow-info
+    name: Display Workflow Info
+    run: 'echo "Running workflow: ${{ workflow.name }}"'

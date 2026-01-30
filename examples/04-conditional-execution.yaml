@@ -1,0 +1,53 @@
+# Conditional Execution Example
+# Demonstrates: if conditions with success(), failure(), always(), cancelled()
+
+name: Conditional Workflow
+description: Shows conditional task execution based on previous task results
+
+tasks:
+  - id: build
+    name: Build Application
+    run: |
+      echo "Building application..."
+      # Simulate successful build
+      exit 0
+
+  - id: test
+    name: Run Tests
+    run: |
+      echo "Running tests..."
+      # Simulate test failure (change to 'exit 0' for success path)
+      exit 1
+    dependsOn:
+      - build
+    continueOnError: true
+
+  - id: deploy
+    name: Deploy to Production
+    run: |
+      echo "Deploying to production..."
+      echo "Deployment successful!"
+    dependsOn:
+      - test
+    if: ${{ success() }}
+
+  - id: notify-success
+    name: Send Success Notification
+    run: 'echo "SUCCESS: Build and deployment completed successfully!"'
+    dependsOn:
+      - deploy
+    if: ${{ success() }}
+
+  - id: notify-failure
+    name: Send Failure Notification
+    run: 'echo "FAILURE: Pipeline failed! Check logs for details."'
+    dependsOn:
+      - test
+    if: ${{ failure() }}
+
+  - id: cleanup
+    name: Cleanup Resources
+    run: |
+      echo "Cleaning up temporary files..."
+      echo "Cleanup complete!"
+    if: ${{ always() }}

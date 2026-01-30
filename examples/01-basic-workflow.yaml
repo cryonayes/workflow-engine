@@ -1,0 +1,18 @@
+# Basic Workflow Example
+# Demonstrates: name, description, simple tasks with sequential execution
+
+name: Basic Hello World
+description: A simple workflow demonstrating basic task execution
+
+tasks:
+  - id: greet
+    name: Say Hello
+    run: echo "Hello, World!"
+
+  - id: date
+    name: Print Date
+    run: date
+
+  - id: list-files
+    name: List Current Directory
+    run: ls -la

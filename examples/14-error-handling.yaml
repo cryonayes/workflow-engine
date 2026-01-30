@@ -1,0 +1,130 @@
+# Error Handling Example
+# Demonstrates: error handling, continueOnError, failure conditions
+
+name: Error Handling Demo
+description: Shows various error handling patterns
+
+tasks:
+  - id: setup
+    name: Setup
+    run: echo "Setup complete"
+
+  #============================================
+  # Pattern 1: Continue on Error
+  #============================================
+
+  - id: optional-lint
+    name: Optional Lint (May Fail)
+    run: |
+      echo "Running optional linter..."
+      # Simulate failure
+      exit 1
+    dependsOn:
+      - setup
+    continueOnError: true
+
+  - id: build-anyway
+    name: Build (Runs Despite Lint Failure)
+    run: |
+      echo "Building anyway..."
+      echo "Lint status was ignored"
+    dependsOn:
+      - optional-lint
+
+  #============================================
+  # Pattern 2: Conditional on Failure
+  #============================================
+
+  - id: critical-task
+    name: Critical Task
+    run: |
+      echo "Running critical task..."
+      # Change to 'exit 1' to test failure path
+      exit 0
+    dependsOn:
+      - setup
+
+  - id: on-success
+    name: Success Handler
+    run: echo "Critical task succeeded!"
+    dependsOn:
+      - critical-task
+    if: ${{ success() }}
+
+  - id: on-failure
+    name: Failure Handler
+    run: |
+      echo "Critical task failed!"
+      echo "Sending alert..."
+    dependsOn:
+      - critical-task
+    if: ${{ failure() }}
+
+  #============================================
+  # Pattern 3: Retry on Failure
+  #============================================
+
+  - id: flaky-network
+    name: Flaky Network Call
+    run: |
+      echo "Attempting network call..."
+      # Simulate flaky service (fails ~66% of the time)
+      [ $((RANDOM % 3)) -eq 0 ] && echo "Success!" || (echo "Failed, retrying..." && exit 1)
+    dependsOn:
+      - setup
+    retryCount: 5
+    retryDelayMs: 1000
+    continueOnError: true
+
+  #============================================
+  # Pattern 4: Cleanup Always Runs
+  #============================================
+
+  - id: allocate-resource
+    name: Allocate Resource
+    run: |
+      echo "Allocating expensive resource..."
+      echo "Resource ID: res-12345"
+    output:
+      type: string
+
+  - id: use-resource
+    name: Use Resource (May Fail)
+    run: |
+      echo "Using resource..."
+      # Simulate potential failure
+      exit 0
+    dependsOn:
+      - allocate-resource
+    continueOnError: true
+
+  - id: release-resource
+    name: Release Resource (Always)
+    run: |
+      echo "Releasing resource: ${{ tasks.allocate-resource.output }}"
+      echo "Resource released"
+    dependsOn:
+      - use-resource
+    if: ${{ always() }}
+
+  #============================================
+  # Pattern 5: Exit Code Checking
+  #============================================
+
+  - id: check-status
+    name: Check Status
+    run: |
+      echo "Checking status..."
+      exit 42
+    continueOnError: true
+    dependsOn:
+      - setup
+
+  - id: handle-specific-code
+    name: Handle Specific Exit Code
+    run: |
+      echo "Exit code was: ${{ tasks.check-status.exitcode }}"
+      echo "Taking specific action for code 42"
+    dependsOn:
+      - check-status
+    if: ${{ tasks.check-status.exitcode == 42 }}

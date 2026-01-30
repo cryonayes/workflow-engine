@@ -1,0 +1,54 @@
+# Output Types Example
+# Demonstrates: output configuration (string, bytes, file, stream)
+
+name: Output Types Demo
+description: Shows different output capture configurations
+
+tasks:
+  # String output (default)
+  - id: string-output
+    name: String Output
+    run: echo "This is captured as a string"
+    output:
+      type: string
+      captureStderr: true
+      maxSizeBytes: 1048576
+
+  # Output with stderr capture
+  - id: stderr-capture
+    name: Capture Both Streams
+    run: |
+      echo "This goes to stdout"
+      echo "This goes to stderr" >&2
+    output:
+      type: string
+      captureStderr: true
+
+  # Output without stderr
+  - id: stdout-only
+    name: Stdout Only
+    run: |
+      echo "Only this is captured"
+      echo "This stderr is ignored" >&2
+    output:
+      type: string
+      captureStderr: false
+
+  # Large output with size limit
+  - id: limited-output
+    name: Size Limited Output
+    run: |
+      for i in $(seq 1 100); do
+        echo "Line $i of output"
+      done
+    output:
+      type: string
+      maxSizeBytes: 1024
+
+  # Using output in subsequent task
+  - id: use-output
+    name: Use Previous Output
+    run: |
+      echo "Previous task said: ${{ tasks.string-output.output }}"
+    dependsOn:
+      - string-output

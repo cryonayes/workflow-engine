@@ -1,0 +1,55 @@
+# Input Types Example
+# Demonstrates: all input types (text, bytes, file, pipe)
+
+name: Input Types Demo
+description: Shows different ways to provide input to tasks
+
+tasks:
+  # Text input - plain text passed to stdin
+  - id: text-input
+    name: Text Input Example
+    run: |
+      echo "Received input:"
+      cat
+    input:
+      type: text
+      value: |
+        This is plain text input
+        Line 2 of the input
+        Line 3 with special chars: $HOME
+
+  # Text input with interpolation
+  - id: interpolated-text
+    name: Interpolated Text Input
+    run: cat
+    input:
+      type: text
+      value: "Workflow name is: ${{ workflow.name }}"
+
+  # Bytes input (base64 encoded)
+  - id: bytes-input
+    name: Bytes Input Example
+    run: |
+      echo "Received bytes (decoded):"
+      cat
+    input:
+      type: bytes
+      value: SGVsbG8gV29ybGQgaW4gQmFzZTY0IQ==
+
+  # Pipe input from previous task
+  - id: producer
+    name: Data Producer
+    run: echo "Data from producer task"
+    output:
+      type: string
+
+  - id: pipe-input
+    name: Pipe Input Example
+    run: |
+      echo "Received piped data:"
+      cat
+    input:
+      type: pipe
+      value: ${{ tasks.producer.output }}
+    dependsOn:
+      - producer

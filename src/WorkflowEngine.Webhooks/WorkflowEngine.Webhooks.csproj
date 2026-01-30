@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Package metadata -->
+    <PackageId>WorkflowEngine.Webhooks</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>WorkflowEngine Contributors</Authors>
+    <Description>Webhook notification providers for the WorkflowEngine</Description>
+    <PackageTags>workflow;automation;webhooks;discord;slack;telegram</PackageTags>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkflowEngine.Core\WorkflowEngine.Core.csproj" />
+    <ProjectReference Include="..\WorkflowEngine.Runner\WorkflowEngine.Runner.csproj" />
+    <ProjectReference Include="..\WorkflowEngine.Expressions\WorkflowEngine.Expressions.csproj" />
+  </ItemGroup>
+
+</Project>

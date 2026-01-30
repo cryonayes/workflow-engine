@@ -1,0 +1,112 @@
+# Example: Webhook Notifications
+# This workflow demonstrates how to configure webhook notifications
+# for external services like Discord, Slack, Telegram, and generic HTTP endpoints.
+#
+# Webhooks are non-blocking and fire in the background - they never slow down
+# or affect the workflow execution. Failed webhooks are logged but don't fail the workflow.
+
+name: Build with Notifications
+description: Demonstrates webhook notifications to external services
+
+# Configure webhook notifications
+# Each webhook specifies a provider, URL, and which events to notify on
+webhooks:
+  # Discord webhook with rich embed formatting
+  - provider: discord
+    url: ${{ env.DISCORD_WEBHOOK_URL }}
+    name: Build Notifications
+    events:
+      - workflow_started
+      - workflow_completed
+      - workflow_failed
+    timeoutMs: 10000
+    retryCount: 2
+
+  # Slack webhook with Block Kit formatting
+  - provider: slack
+    url: ${{ env.SLACK_WEBHOOK_URL }}
+    events:
+      - workflow_completed
+      - workflow_failed
+      - task_failed
+    headers:
+      X-Custom-Header: my-custom-value
+
+  # Telegram Bot API webhook
+  - provider: telegram
+    url: https://api.telegram.org/bot${{ env.TELEGRAM_BOT_TOKEN }}/sendMessage
+    options:
+      chat_id: ${{ env.TELEGRAM_CHAT_ID }}
+    events:
+      - workflow_failed
+
+  # Generic HTTP webhook with custom headers
+  - provider: http
+    url: https://api.example.com/webhooks/workflow
+    headers:
+      Authorization: Bearer ${{ env.API_TOKEN }}
+      Content-Type: application/json
+    events:
+      - workflow_started
+      - workflow_completed
+      - workflow_failed
+      - task_completed
+      - task_failed
+    timeoutMs: 5000
+    retryCount: 3
+
+tasks:
+  # Simulate a build pipeline
+  - id: checkout
+    name: Checkout Code
+    run: echo "Checking out code from repository..."
+
+  - id: install
+    name: Install Dependencies
+    run: echo "Installing dependencies..."
+    dependsOn: [checkout]
+
+  - id: lint
+    name: Run Linter
+    run: echo "Running code linting..."
+    dependsOn: [install]
+
+  - id: test
+    name: Run Tests
+    run: |
+      echo "Running unit tests..."
+      echo "All 42 tests passed!"
+    dependsOn: [install]
+
+  - id: build
+    name: Build Application
+    run: |
+      echo "Building application..."
+      echo "Build completed successfully!"
+    dependsOn: [lint, test]
+
+  - id: deploy
+    name: Deploy
+    run: echo "Deploying application..."
+    dependsOn: [build]
+
+# Available webhook events:
+# - workflow_started    : Fires when workflow execution begins
+# - workflow_completed  : Fires when workflow completes successfully
+# - workflow_failed     : Fires when workflow fails (any task fails)
+# - workflow_cancelled  : Fires when workflow is cancelled
+# - task_started        : Fires when each task starts
+# - task_completed      : Fires when each task completes successfully
+# - task_failed         : Fires when a task fails
+# - task_skipped        : Fires when a task is skipped
+# - task_timed_out      : Fires when a task times out
+
+# Provider-specific notes:
+# - discord: Sends rich embeds with colors and formatted fields
+# - slack: Uses Block Kit for structured messages
+# - telegram: Uses HTML formatting, requires chat_id in options
+# - http: Sends raw JSON payload with all notification data
+
+# Expression support:
+# - URLs and headers can use ${{ env.VAR }} expressions
+# - Environment variables are interpolated at runtime

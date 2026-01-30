@@ -1,0 +1,40 @@
+name: Cancellation with Continue Example
+description: Demonstrates task cancellation with continueOnError support
+
+tasks:
+  - id: quick-task
+    name: Quick Task
+    run: echo "Quick task completed"
+
+  - id: long-running-with-continue
+    name: Long Running (Continue on Cancel)
+    run: |
+      echo "Starting long-running task..."
+      sleep 30
+      echo "Long task completed"
+    continueOnError: true
+    dependsOn: [quick-task]
+
+  - id: long-running-no-continue
+    name: Long Running (Stop on Cancel)
+    run: |
+      echo "Starting another long-running task..."
+      sleep 30
+      echo "Task completed"
+    dependsOn: [quick-task]
+
+  - id: after-continue
+    name: Task After Cancelled Task (with continueOnError)
+    run: echo "This runs after cancelled task with continueOnError"
+    dependsOn: [long-running-with-continue]
+
+  - id: after-no-continue
+    name: Task After Cancelled Task (without continueOnError)
+    run: echo "This depends on task without continueOnError"
+    dependsOn: [long-running-no-continue]
+
+  - id: final-task
+    name: Final Task
+    run: echo "Final task completed"
+    dependsOn: [after-continue]
+    condition: always()

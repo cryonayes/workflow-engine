@@ -1,0 +1,75 @@
+name: Large Output Demo
+description: Demonstrates handling of tasks with 250+ lines of output
+
+tasks:
+  - id: generate-output
+    name: Generate Large Output
+    run: |
+      echo "=== Starting Large Output Generation ==="
+      echo "Timestamp: $(date)"
+      echo ""
+
+      echo "--- Section 1: System Information ---"
+      for i in $(seq 1 20); do
+        echo "  Line $i: System check #$i - Status: OK"
+      done
+      echo ""
+
+      echo "--- Section 2: Processing Records ---"
+      for i in $(seq 1 100); do
+        printf "  [%03d] Processing record: ID=%05d Status=COMPLETE Duration=%dms\n" $i $((i * 17)) $((RANDOM % 500))
+      done
+      echo ""
+
+      echo "--- Section 3: Validation Results ---"
+      for i in $(seq 1 50); do
+        status=$((RANDOM % 10))
+        if [ $status -lt 8 ]; then
+          echo "  ✓ Validation #$i: PASSED"
+        else
+          echo "  ⚠ Validation #$i: WARNING - Minor issue detected"
+        fi
+      done
+      echo ""
+
+      echo "--- Section 4: Build Artifacts ---"
+      artifacts=("main.dll" "utils.dll" "config.json" "data.db" "styles.css" "app.js" "index.html" "manifest.json")
+      for i in $(seq 1 30); do
+        artifact=${artifacts[$((RANDOM % ${#artifacts[@]}))]}
+        size=$((RANDOM % 10000 + 100))
+        echo "  Artifact $i: $artifact ($size KB) - Packaged successfully"
+      done
+      echo ""
+
+      echo "--- Section 5: Test Execution Log ---"
+      test_suites=("UnitTests" "IntegrationTests" "E2ETests" "PerformanceTests" "SecurityTests")
+      for i in $(seq 1 50); do
+        suite=${test_suites[$((RANDOM % ${#test_suites[@]}))]}
+        test_num=$((RANDOM % 100 + 1))
+        duration=$((RANDOM % 2000 + 50))
+        echo "  [$suite] Test_$test_num: PASSED (${duration}ms)"
+      done
+      echo ""
+
+      echo "--- Section 6: Deployment Simulation ---"
+      for i in $(seq 1 20); do
+        echo "  Step $i/20: Deploying component $i..."
+        echo "    - Copying files..."
+        echo "    - Updating configuration..."
+        echo "    - Restarting service..."
+        echo "    - Health check: OK"
+      done
+      echo ""
+
+      echo "=== Large Output Generation Complete ==="
+      echo "Total lines generated: 250+"
+      echo "Timestamp: $(date)"
+
+  - id: summary
+    name: Print Summary
+    depends_on: [generate-output]
+    run: |
+      echo "Large output task completed successfully!"
+      echo "Use arrow keys to select the task above"
+      echo "Press Enter to inspect the full output"
+      echo "Use PgUp/PgDn to scroll through the output"

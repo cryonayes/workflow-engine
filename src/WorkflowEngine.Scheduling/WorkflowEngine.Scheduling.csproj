@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Cronos" Version="0.8.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkflowEngine.Core\WorkflowEngine.Core.csproj" />
+    <ProjectReference Include="..\WorkflowEngine.Parsing\WorkflowEngine.Parsing.csproj" />
+    <ProjectReference Include="..\WorkflowEngine.Runner\WorkflowEngine.Runner.csproj" />
+  </ItemGroup>
+
+</Project>

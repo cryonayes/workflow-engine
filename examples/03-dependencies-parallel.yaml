@@ -1,0 +1,65 @@
+# Dependencies and Parallel Execution Example
+# Demonstrates: dependsOn, parallel task execution, DAG scheduling
+
+name: Build and Test Pipeline
+description: Demonstrates parallel execution with dependencies (DAG scheduling)
+
+# Execution order:
+# Wave 0: [restore]           - No dependencies
+# Wave 1: [build, lint]       - Both depend on restore, run in PARALLEL
+# Wave 2: [unit-tests, integration-tests] - Both depend on build, run in PARALLEL
+# Wave 3: [report]            - Depends on both test tasks
+
+tasks:
+  - id: restore
+    name: Restore Dependencies
+    run: |
+      echo "Restoring NuGet packages..."
+      sleep 1
+      echo "Restore complete!"
+
+  - id: build
+    name: Build Project
+    run: |
+      echo "Building project..."
+      sleep 2
+      echo "Build successful!"
+    dependsOn:
+      - restore
+
+  - id: lint
+    name: Run Code Analysis
+    run: |
+      echo "Running static analysis..."
+      sleep 1
+      echo "No issues found!"
+    dependsOn:
+      - restore
+
+  - id: unit-tests
+    name: Run Unit Tests
+    run: |
+      echo "Running unit tests..."
+      sleep 2
+      echo "All 150 tests passed!"
+    dependsOn:
+      - build
+
+  - id: integration-tests
+    name: Run Integration Tests
+    run: |
+      echo "Running integration tests..."
+      sleep 3
+      echo "All 45 integration tests passed!"
+    dependsOn:
+      - build
+
+  - id: report
+    name: Generate Test Report
+    run: |
+      echo "Generating combined test report..."
+      echo "Unit Tests: PASSED"
+      echo "Integration Tests: PASSED"
+    dependsOn:
+      - unit-tests
+      - integration-tests

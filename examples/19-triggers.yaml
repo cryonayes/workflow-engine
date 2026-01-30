@@ -1,0 +1,98 @@
+# Trigger Service Configuration Example
+# This file demonstrates how to configure the trigger service
+# to receive inbound messages from various platforms and execute workflows.
+
+# Credentials for bot integrations
+# Use environment variables for sensitive data
+credentials:
+  telegram:
+    botToken: ${TELEGRAM_BOT_TOKEN}
+  discord:
+    botToken: ${DISCORD_BOT_TOKEN}
+  slack:
+    appToken: ${SLACK_APP_TOKEN}
+    signingSecret: ${SLACK_SIGNING_SECRET}
+
+# HTTP server configuration for receiving webhooks
+httpServer:
+  port: 8080
+  host: "0.0.0.0"
+
+# Trigger rules
+triggers:
+  # Command-based trigger: "/build my-project" captures {project}
+  - name: build-project
+    source: telegram
+    type: command
+    pattern: "/build {project}"
+    workflow: ./workflows/build.yaml
+    parameters:
+      PROJECT_NAME: "{project}"
+      TRIGGERED_BY: "{username}"
+    responseTemplate: "Building {project}... Run ID: {runId}"
+    cooldown: 30s
+
+  # Regex pattern: "deploy auth-api v1.2.3" with named captures
+  - name: deploy-version
+    source: [telegram, slack]
+    type: pattern
+    pattern: "deploy\\s+(?<service>\\w[\\w-]*)\\s+v(?<version>[\\d.]+)"
+    workflow: ./workflows/deploy.yaml
+    parameters:
+      SERVICE_NAME: "{service}"
+      VERSION: "{version}"
+      DEPLOYED_BY: "{username}"
+    responseTemplate: "Deploying {service} v{version}... Run ID: {runId}"
+    cooldown: 60s
+
+  # Discord slash-style command
+  - name: discord-status
+    source: discord
+    type: command
+    pattern: "!status {service}"
+    workflow: ./workflows/status-check.yaml
+    parameters:
+      SERVICE: "{service}"
+    responseTemplate: "Checking status of {service}..."
+
+  # Keyword trigger for emergencies
+  - name: emergency-deploy
+    source: all
+    type: keyword
+    keywords: ["hotfix deploy", "emergency release", "urgent deploy"]
+    workflow: ./workflows/emergency-deploy.yaml
+    parameters:
+      URGENCY: "high"
+      REQUESTER: "{username}"
+    responseTemplate: "EMERGENCY deployment initiated. Run ID: {runId}"
+
+  # Generic HTTP webhook trigger
+  - name: ci-webhook
+    source: http
+    type: pattern
+    pattern: ".*"  # Match any text in webhook payload
+    workflow: ./workflows/ci-notify.yaml
+    parameters:
+      WEBHOOK_DATA: "{text}"
+
+  # Multi-platform help command
+  - name: help-command
+    source: [telegram, discord, slack]
+    type: command
+    pattern: "/help"
+    workflow: ./workflows/help-response.yaml
+    responseTemplate: |
+      Available commands:
+      - /build {project} - Build a project
+      - /deploy {service} v{version} - Deploy a service
+      - /status {service} - Check service status
+
+  # Disabled trigger (for reference)
+  - name: deprecated-command
+    source: telegram
+    type: command
+    pattern: "/old-build {project}"
+    workflow: ./workflows/build.yaml
+    parameters:
+      PROJECT_NAME: "{project}"
+    enabled: false

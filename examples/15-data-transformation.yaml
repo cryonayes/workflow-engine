@@ -1,0 +1,136 @@
+# Data Transformation Pipeline Example
+# Demonstrates: chaining tasks for data processing with input/output piping
+
+name: Data Transformation Pipeline
+description: ETL-style data processing with task chaining
+
+tasks:
+  #============================================
+  # Extract: Generate Source Data
+  #============================================
+
+  - id: extract-users
+    name: Extract User Data
+    run: |
+      cat << 'EOF'
+      alice,30,engineer
+      bob,25,designer
+      charlie,35,manager
+      diana,28,analyst
+      eve,32,developer
+      EOF
+    output:
+      type: string
+      captureStderr: false
+
+  #============================================
+  # Transform: Process Data
+  #============================================
+
+  - id: add-headers
+    name: Add CSV Headers
+    run: |
+      echo "name,age,role"
+      cat
+    input:
+      type: pipe
+      value: ${{ tasks.extract-users.output }}
+    dependsOn:
+      - extract-users
+    output:
+      type: string
+
+  - id: filter-senior
+    name: Filter Senior Employees (Age >= 30)
+    run: |
+      echo "name,age,role"
+      while IFS=, read -r name age role; do
+        if [ "$name" != "name" ] && [ "$age" -ge 30 ]; then
+          echo "$name,$age,$role"
+        fi
+      done
+    input:
+      type: pipe
+      value: ${{ tasks.add-headers.output }}
+    dependsOn:
+      - add-headers
+    output:
+      type: string
+
+  - id: count-records
+    name: Count Total Records
+    run: |
+      count=0
+      while read -r line; do
+        count=$((count + 1))
+      done
+      # Subtract 1 for header
+      echo $((count - 1))
+    input:
+      type: pipe
+      value: ${{ tasks.add-headers.output }}
+    dependsOn:
+      - add-headers
+    output:
+      type: string
+
+  - id: calculate-avg-age
+    name: Calculate Average Age
+    run: |
+      sum=0
+      count=0
+      while IFS=, read -r name age role; do
+        if [ "$name" != "name" ]; then
+          sum=$((sum + age))
+          count=$((count + 1))
+        fi
+      done
+      if [ $count -gt 0 ]; then
+        avg=$((sum / count))
+        echo "$avg"
+      else
+        echo "0"
+      fi
+    input:
+      type: pipe
+      value: ${{ tasks.add-headers.output }}
+    dependsOn:
+      - add-headers
+    output:
+      type: string
+
+  #============================================
+  # Load: Generate Reports
+  #============================================
+
+  - id: generate-report
+    name: Generate Summary Report
+    run: |
+      echo "================================"
+      echo "   DATA TRANSFORMATION REPORT   "
+      echo "================================"
+      echo ""
+      echo "Total Records: ${{ tasks.count-records.output }}"
+      echo "Average Age: ${{ tasks.calculate-avg-age.output }}"
+      echo ""
+      echo "Senior Employees (30+):"
+      echo "------------------------"
+      cat
+      echo ""
+      echo "================================"
+    input:
+      type: pipe
+      value: ${{ tasks.filter-senior.output }}
+    dependsOn:
+      - filter-senior
+      - count-records
+      - calculate-avg-age
+    output:
+      type: string
+
+  - id: display-result
+    name: Display Final Result
+    run: |
+      echo "${{ tasks.generate-report.output }}"
+    dependsOn:
+      - generate-report

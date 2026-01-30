@@ -1,0 +1,63 @@
+# Retry and Timeout Example
+# Demonstrates: retryCount, retryDelayMs, timeoutMs, continueOnError
+
+name: Retry and Timeout Demo
+description: Shows retry logic and timeout handling
+
+defaultTimeoutMs: 60000
+
+tasks:
+  # Task with retry on failure
+  - id: flaky-service
+    name: Call Flaky Service
+    run: |
+      echo "Attempting to call service..."
+      # Simulate random failure (in real scenario, this might be a network call)
+      if [ $((RANDOM % 3)) -eq 0 ]; then
+        echo "Success!"
+        exit 0
+      else
+        echo "Service unavailable, will retry..."
+        exit 1
+      fi
+    retryCount: 3
+    retryDelayMs: 2000
+
+  # Task with custom timeout
+  - id: quick-task
+    name: Quick Task with Short Timeout
+    run: |
+      echo "This should complete quickly"
+      sleep 1
+      echo "Done!"
+    timeoutMs: 5000
+
+  # Task that might timeout (disabled - would fail)
+  # - id: slow-task
+  #   name: Slow Task
+  #   run: sleep 10
+  #   timeoutMs: 3000
+
+  # Continue on error example
+  - id: optional-task
+    name: Optional Task (May Fail)
+    run: |
+      echo "This task might fail..."
+      exit 1
+    continueOnError: true
+
+  - id: after-optional
+    name: Runs After Optional
+    run: echo "This runs even if optional-task failed"
+    dependsOn:
+      - optional-task
+
+  # Retry with exponential backoff simulation
+  - id: api-call
+    name: API Call with Retries
+    run: |
+      echo "Making API request..."
+      # Simulate API call
+      curl -s -o /dev/null -w "%{http_code}" https://httpstat.us/200 || echo "200"
+    retryCount: 5
+    retryDelayMs: 1000

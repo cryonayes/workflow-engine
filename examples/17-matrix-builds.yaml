@@ -1,0 +1,48 @@
+name: Matrix Builds Example
+description: Demonstrates matrix builds for running tasks across multiple configurations
+
+tasks:
+  # Single dimension matrix - runs on 3 operating systems
+  - id: build
+    name: Build on ${{ matrix.os }}
+    run: echo "Building on OS=${{ matrix.os }}"
+    matrix:
+      os: [ubuntu, macos, windows]
+
+  # Multi-dimensional matrix - runs on all combinations of OS and Python version
+  - id: test
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python }}
+    run: echo "Testing on ${{ matrix.os }} with Python ${{ matrix.python }}"
+    dependsOn:
+      - build
+    matrix:
+      os: [ubuntu, macos, windows]
+      python: ["3.10", "3.11", "3.12"]
+      exclude:
+        # Windows doesn't support Python 3.10 in this example
+        - os: windows
+          python: "3.10"
+      include:
+        # Add experimental Python 3.13 build for ubuntu only
+        - os: ubuntu
+          python: "3.13"
+          experimental: "true"
+
+  # Matrix with environment variable interpolation
+  - id: deploy
+    name: Deploy to ${{ matrix.env }}
+    run: echo "Deploying to ${{ matrix.env }} environment"
+    environment:
+      DEPLOY_ENV: "${{ matrix.env }}"
+      NOTIFY: "true"
+    dependsOn:
+      - test
+    matrix:
+      env: [staging, production]
+
+  # Non-matrix task that depends on all test tasks
+  - id: report
+    name: Generate Report
+    run: echo "All tests completed successfully"
+    dependsOn:
+      - test

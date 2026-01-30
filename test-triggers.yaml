@@ -1,0 +1,44 @@
+# Test triggers configuration
+credentials:
+  telegram:
+    botToken: "8585362456:AAFP1CJIvnjQLHI4tPGDoahukf5w9sCVKVM"
+
+httpServer:
+  port: 8080
+  host: "127.0.0.1"
+
+triggers:
+  - name: build-project
+    source: telegram
+    type: command
+    pattern: "/build {project}"
+    workflow: ./examples/01-basic-workflow.yaml
+    parameters:
+      PROJECT_NAME: "{project}"
+      TRIGGERED_BY: "{username}"
+    responseTemplate: "Building {project}... triggered by {username}"
+    enabled: true
+
+  - name: hello
+    source: telegram
+    type: command
+    pattern: "/hello"
+    workflow: ./examples/01-basic-workflow.yaml
+    responseTemplate: "Hello {username}! I received your message."
+    enabled: true
+
+  - name: echo-message
+    source: telegram
+    type: pattern
+    pattern: "echo (?<message>.+)"
+    workflow: ./examples/01-basic-workflow.yaml
+    responseTemplate: "You said: {message}"
+    enabled: true
+
+  - name: any-keyword
+    source: telegram
+    type: keyword
+    keywords: ["help", "status", "info"]
+    workflow: ./examples/01-basic-workflow.yaml
+    responseTemplate: "You triggered a keyword! I'm here to help."
+    enabled: true

@@ -1,0 +1,208 @@
+# Complex Pipeline Example
+# Demonstrates: combining all features in a realistic CI/CD pipeline
+
+name: Full CI/CD Pipeline
+description: A comprehensive CI/CD pipeline demonstrating all workflow features
+
+environment:
+  APP_NAME: myapp
+  VERSION: 1.0.0
+  REGISTRY: docker.io
+  DEPLOY_ENV: staging
+
+defaultTimeoutMs: 300000
+
+tasks:
+  #============================================
+  # Stage 1: Setup and Validation
+  #============================================
+
+  - id: checkout
+    name: Checkout Code
+    run: |
+      echo "Checking out repository..."
+      echo "Commit: abc123"
+      echo "Branch: main"
+    output:
+      type: string
+
+  - id: validate-config
+    name: Validate Configuration
+    run: |
+      echo "Validating configuration files..."
+      echo "Config OK"
+    dependsOn:
+      - checkout
+
+  #============================================
+  # Stage 2: Build (Parallel)
+  #============================================
+
+  - id: install-deps
+    name: Install Dependencies
+    run: |
+      echo "Installing dependencies..."
+      sleep 1
+      echo "Dependencies installed"
+    dependsOn:
+      - validate-config
+    retryCount: 2
+    retryDelayMs: 5000
+
+  - id: build-app
+    name: Build Application
+    run: |
+      echo "Building ${{ env.APP_NAME }} v${{ env.VERSION }}..."
+      sleep 2
+      echo "Build artifact: ${{ env.APP_NAME }}-${{ env.VERSION }}.tar.gz"
+    dependsOn:
+      - install-deps
+    output:
+      type: string
+    timeoutMs: 120000
+
+  - id: build-docker
+    name: Build Docker Image
+    run: |
+      echo "Building Docker image..."
+      echo "${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ env.VERSION }}"
+    dependsOn:
+      - install-deps
+    output:
+      type: string
+
+  #============================================
+  # Stage 3: Quality Checks (Parallel)
+  #============================================
+
+  - id: lint
+    name: Run Linter
+    run: |
+      echo "Running linter..."
+      echo "No linting errors found"
+    dependsOn:
+      - install-deps
+
+  - id: security-scan
+    name: Security Scan
+    run: |
+      echo "Running security scan..."
+      echo "No vulnerabilities found"
+    dependsOn:
+      - build-docker
+    continueOnError: true
+
+  - id: unit-tests
+    name: Run Unit Tests
+    run: |
+      echo "Running unit tests..."
+      echo "Tests: 256 passed, 0 failed"
+      echo "Coverage: 85%"
+    dependsOn:
+      - build-app
+    output:
+      type: string
+      captureStderr: true
+
+  - id: integration-tests
+    name: Run Integration Tests
+    run: |
+      echo "Running integration tests..."
+      sleep 2
+      echo "Tests: 48 passed, 0 failed"
+    dependsOn:
+      - build-app
+    timeoutMs: 180000
+
+  #============================================
+  # Stage 4: Reporting
+  #============================================
+
+  - id: test-report
+    name: Generate Test Report
+    run: |
+      echo "=== Test Report ==="
+      echo "Unit Tests: ${{ tasks.unit-tests.output }}"
+      echo "Integration: Passed"
+      echo "=================="
+    dependsOn:
+      - unit-tests
+      - integration-tests
+    if: ${{ success() }}
+    output:
+      type: string
+
+  #============================================
+  # Stage 5: Deploy (Conditional)
+  #============================================
+
+  - id: deploy-staging
+    name: Deploy to Staging
+    run: |
+      echo "Deploying to staging..."
+      echo "Image: ${{ tasks.build-docker.output }}"
+      echo "Deployment successful!"
+    dependsOn:
+      - test-report
+      - security-scan
+    if: ${{ success() && env.DEPLOY_ENV == 'staging' }}
+    environment:
+      KUBE_CONTEXT: staging-cluster
+
+  - id: deploy-production
+    name: Deploy to Production
+    run: |
+      echo "Deploying to production..."
+      echo "Image: ${{ tasks.build-docker.output }}"
+    dependsOn:
+      - test-report
+      - security-scan
+    if: ${{ success() && env.DEPLOY_ENV == 'production' }}
+    environment:
+      KUBE_CONTEXT: prod-cluster
+
+  - id: smoke-tests
+    name: Run Smoke Tests
+    run: |
+      echo "Running post-deployment smoke tests..."
+      echo "All endpoints responding"
+    dependsOn:
+      - deploy-staging
+    if: ${{ success() }}
+
+  #============================================
+  # Stage 6: Notifications (Always run)
+  #============================================
+
+  - id: notify-success
+    name: Send Success Notification
+    run: |
+      echo "SUCCESS: Pipeline completed!"
+      echo "App: ${{ env.APP_NAME }}"
+      echo "Version: ${{ env.VERSION }}"
+      echo "Environment: ${{ env.DEPLOY_ENV }}"
+    dependsOn:
+      - smoke-tests
+    if: ${{ success() }}
+
+  - id: notify-failure
+    name: Send Failure Notification
+    run: |
+      echo "FAILURE: Pipeline failed!"
+      echo "Check logs for details"
+    if: ${{ failure() }}
+
+  - id: cleanup
+    name: Cleanup Resources
+    run: |
+      echo "Cleaning up temporary resources..."
+      echo "Cleanup complete"
+    if: ${{ always() }}
+
+  - id: metrics
+    name: Record Pipeline Metrics
+    run: |
+      echo "Recording pipeline metrics..."
+      echo "Duration: calculated at runtime"
+      echo "Status: recorded"
+    if: ${{ always() }}

@@ -1,0 +1,64 @@
+# Diamond Dependency Pattern Example
+# Demonstrates: complex DAG with diamond-shaped dependencies
+
+name: Diamond Dependency Pattern
+description: Shows diamond-shaped dependency resolution (A -> B,C -> D)
+
+#        ┌──► B ──┐
+#    A ──┤        ├──► D ──► E
+#        └──► C ──┘
+
+tasks:
+  - id: A
+    name: Root Task (A)
+    run: |
+      echo "Task A: Starting the pipeline"
+      echo "Output from A"
+    output:
+      type: string
+
+  - id: B
+    name: Branch Task (B)
+    run: |
+      echo "Task B: Processing branch 1"
+      echo "Input from A: ${{ tasks.A.output }}"
+      sleep 1
+      echo "B completed"
+    dependsOn:
+      - A
+    output:
+      type: string
+
+  - id: C
+    name: Branch Task (C)
+    run: |
+      echo "Task C: Processing branch 2"
+      echo "Input from A: ${{ tasks.A.output }}"
+      sleep 2
+      echo "C completed"
+    dependsOn:
+      - A
+    output:
+      type: string
+
+  - id: D
+    name: Merge Task (D)
+    run: |
+      echo "Task D: Merging results"
+      echo "From B: ${{ tasks.B.output }}"
+      echo "From C: ${{ tasks.C.output }}"
+      echo "Merge completed"
+    dependsOn:
+      - B
+      - C
+    output:
+      type: string
+
+  - id: E
+    name: Final Task (E)
+    run: |
+      echo "Task E: Final processing"
+      echo "Merged result: ${{ tasks.D.output }}"
+      echo "Pipeline complete!"
+    dependsOn:
+      - D

@@ -1,0 +1,61 @@
+# Shell Types Example
+# Demonstrates: different shell types (bash, sh, zsh, pwsh, cmd)
+
+name: Shell Types Demo
+description: Shows how to use different shells for task execution
+
+tasks:
+  # Default shell (bash)
+  - id: bash-task
+    name: Bash Script
+    shell: bash
+    run: |
+      echo "Running in Bash"
+      echo "Bash version: $BASH_VERSION"
+
+      # Bash-specific features
+      arr=(one two three)
+      for item in "${arr[@]}"; do
+        echo "  - $item"
+      done
+
+  # POSIX sh shell
+  - id: sh-task
+    name: POSIX Shell Script
+    shell: sh
+    run: |
+      echo "Running in POSIX sh"
+      echo "Simple and portable"
+
+      # POSIX compatible
+      for item in one two three; do
+        echo "  - $item"
+      done
+
+  # Zsh shell (if available)
+  - id: zsh-task
+    name: Zsh Script
+    shell: zsh
+    run: |
+      echo "Running in Zsh"
+      echo "Zsh version: $ZSH_VERSION"
+
+      # Zsh features
+      typeset -A assoc
+      assoc[key1]=value1
+      assoc[key2]=value2
+      echo "Associative array: ${(kv)assoc}"
+    continueOnError: true
+
+  # PowerShell Core (cross-platform)
+  - id: pwsh-task
+    name: PowerShell Script
+    shell: pwsh
+    run: |
+      Write-Host "Running in PowerShell Core"
+      Write-Host "PS Version: $($PSVersionTable.PSVersion)"
+
+      # PowerShell features
+      $items = @("alpha", "beta", "gamma")
+      $items | ForEach-Object { Write-Host "  - $_" }
+    continueOnError: true

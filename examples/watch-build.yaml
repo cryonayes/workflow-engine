@@ -1,0 +1,47 @@
+# Example: Auto Build with Watch Mode
+# This workflow demonstrates the watch mode / file trigger feature.
+# Run with: workflow-engine run examples/watch-build.yaml --watch
+
+name: Auto Build
+description: Automatically rebuild and test on file changes
+
+# Watch configuration - triggers workflow re-execution on file changes
+watch:
+  paths:
+    - "src/**/*.cs"
+    - "tests/**/*.cs"
+    - "**/*.csproj"
+  ignore:
+    - "**/bin/**"
+    - "**/obj/**"
+    - "**/.git/**"
+  debounce: 500ms
+  runOnStart: true  # Run once immediately before watching
+
+tasks:
+  - id: clean
+    name: Clean Build Artifacts
+    run: dotnet clean --nologo -v q
+
+  - id: restore
+    name: Restore Dependencies
+    run: dotnet restore --nologo -v q
+    dependsOn: [clean]
+
+  - id: build
+    name: Build Solution
+    run: dotnet build --no-restore --nologo -v q
+    dependsOn: [restore]
+
+  - id: test
+    name: Run Tests
+    run: dotnet test --no-build --nologo -v q
+    dependsOn: [build]
+    continueOnError: true  # Continue to show test summary even on failures
+
+  - id: summary
+    name: Build Summary
+    run: |
+      echo "Build completed at $(date)"
+      echo "Waiting for changes..."
+    dependsOn: [test]

@@ -1,0 +1,45 @@
+# Working Directory Example
+# Demonstrates: workflow-level and task-level working directory configuration
+
+name: Working Directory Demo
+description: Shows how to configure working directories
+
+workingDirectory: /tmp
+
+tasks:
+  - id: default-dir
+    name: Use Workflow Working Directory
+    run: |
+      echo "Current directory: $(pwd)"
+      echo "Should be: /tmp"
+
+  - id: custom-dir
+    name: Use Custom Working Directory
+    run: |
+      echo "Current directory: $(pwd)"
+      echo "Should be home directory"
+    workingDirectory: ~
+
+  - id: create-temp
+    name: Create Temp Directory
+    run: |
+      mkdir -p /tmp/workflow-test
+      echo "Created /tmp/workflow-test"
+      touch /tmp/workflow-test/test-file.txt
+      echo "Created test file"
+
+  - id: use-temp
+    name: Work in Temp Directory
+    run: |
+      echo "Working in: $(pwd)"
+      ls -la
+    workingDirectory: /tmp/workflow-test
+    dependsOn:
+      - create-temp
+
+  - id: cleanup-temp
+    name: Cleanup Temp Directory
+    run: |
+      rm -rf /tmp/workflow-test
+      echo "Cleaned up temp directory"
+    if: ${{ always() }}
